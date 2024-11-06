@@ -2,10 +2,9 @@ from flask import Flask, render_template, request, redirect, url_for
 from flask_sqlalchemy import SQLAlchemy
 
 app = Flask(__name__)
-
-# 更新数据库配置，指向已有的数据库文件
-app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'  # 确保路径指向你已有的数据库
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+# 配置SQLite数据库
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'  # 数据库文件
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False  # 禁用修改追踪
 db = SQLAlchemy(app)
 
 # 定义数据库模型
@@ -17,14 +16,14 @@ class User(db.Model):
     def __repr__(self):
         return f'<User {self.username}>'
 
-# 创建数据库表（如果数据库已存在，则无需此操作，但可以保持以防万一）
-# with app.app_context():
-#     db.create_all()
+# 创建数据库
+with app.app_context():
+    db.create_all()
 
-# 首页路由，显示所有用户
+# 首页路由
 @app.route('/')
 def index():
-    users = User.query.all()  # 获取所有用户
+    users = User.query.all()
     return render_template('index.html', users=users)
 
 # 添加用户路由
@@ -37,6 +36,14 @@ def add_user():
         db.session.add(new_user)
         db.session.commit()
         return redirect(url_for('index'))
+
+# 删除用户路由
+@app.route('/delete/<int:id>', methods=['GET'])
+def delete_user(id):
+    user = User.query.get(id)
+    db.session.delete(user)
+    db.session.commit()
+    return redirect(url_for('index'))
 
 if __name__ == '__main__':
     app.run(debug=True)
